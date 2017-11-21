@@ -1,0 +1,29 @@
+<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" [routerLinkActive]="['active']" [routerLinkActiveOptions] = "{exact:true}" [routerLink]="['/']">Snapszer Home</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" [routerLink]="['/profile']" [routerLinkActive]="['active']" [routerLinkActiveOptions] = "{exact:true}">
+            Profile<span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Play</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link disabled" href="#">Results</a>
+        </li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li class="nav-item active" [routerLinkActive]="['active']" [routerLinkActiveOptions] = "{exact:true}">
+          <a class="nav-link" [routerLink]="['/login']">Login<span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item active" >
+            <a class="nav-link" routerLink="/register" routerLinkActive="active">Register<span class="sr-only">(current)</span></a>
+        </li>
+      </ul>
+    </div>
+  </nav>
