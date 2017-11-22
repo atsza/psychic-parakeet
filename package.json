@@ -7,16 +7,22 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app"
   },
-  "dependencies":{
-    "express": "*",
-    "mongoose": "*",
+  "dependencies": {
+    "angular2-flash-message": "^1.0.2",
+    "angular2-jwt": "^0.2.3",
     "bcryptjs": "*",
+    "body-parser": "*",
     "cors": "*",
-    "jsonwebtoken":"*",
-    "body-parser":"*",
-    "passport":"*",
-    "passport-jwt":"*"
+    "express": "*",
+    "jsonwebtoken": "*",
+    "mongoose": "*",
+    "passport": "*",
+    "passport-jwt": "*",
+    "typescript": "^2.0.10"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "angular2-flash-messages": "^2.0.0"
+  }
 }
