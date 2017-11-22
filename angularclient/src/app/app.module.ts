@@ -16,6 +16,7 @@ import {ValidateService} from './services/validate.service';
 import {AuthService} from './services/auth.service';
 import {FlashMessagesModule} from 'angular2-flash-messages';
 import {AuthGuard} from './guards/auth.guard';
+import { GamehandlerComponent } from './components/gamehandler/gamehandler.component';
 
 const appRoutes: Routes = [
   {path:'', component: HomeComponent},
@@ -34,7 +35,8 @@ const appRoutes: Routes = [
     RegisterComponent,
     DashboardComponent,
     HomeComponent,
-    ProfileComponent
+    ProfileComponent,
+    GamehandlerComponent
   ],
   imports: [
     BrowserModule,
