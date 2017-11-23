@@ -19,12 +19,16 @@ export class GamehandlerComponent implements OnInit {
   deck_upsideDown: Card;
   cardsWon : Card[];
   opponent_cardsWon : Card[];
+  cardColor : String[];
+  cardValue : String[];
 
   
 
 
   constructor(private authService:AuthService,
     private router:Router) {
+      this.cardColor= ["Hearts","Bells","Acorns","Leaves"];
+      this.cardValue= ["Lower","Upper","King","Ten","Ace"];
       this.opponent_cards=[];
       this.own_cards=[];
       this.deck=[];
@@ -32,9 +36,9 @@ export class GamehandlerComponent implements OnInit {
       this.opponent_cardsWon=[];
       
 
-      this.opponent_cards.push(new Card(cardColor.Hearts,cardValue.Ace));
-      this.opponent_cards.push(new Card(cardColor.Bells,cardValue.Ace));
-      this.opponent_cards.push(new Card(cardColor.Acorns,cardValue.Ace));
+      // this.opponent_cards.push(new Card(cardColor.Hearts,cardValue.Ace));
+      // this.opponent_cards.push(new Card(cardColor.Bells,cardValue.Ace));
+      // this.opponent_cards.push(new Card(cardColor.Acorns,cardValue.Ace));
      }
   ngOnInit() {
   }
@@ -64,11 +68,8 @@ export class GamehandlerComponent implements OnInit {
   }
 
   createDeck(){
-    var colors = [cardColor.Acorns, cardColor.Bells, cardColor.Hearts, cardColor.Leaves];
-    var values = [cardValue.Ace,cardValue.King,cardValue.Lower,cardValue.Ten,cardValue.Upper];
-
-    colors.forEach(c => {
-      values.forEach(v => {
+    this.cardColor.forEach(c => {
+      this.cardValue.forEach(v => {
         this.deck.push (new Card(c,v));
       });
     });    
@@ -98,27 +99,11 @@ export class GamehandlerComponent implements OnInit {
   
 }
 
- enum cardColor {
-  Hearts,
-  Bells,
-  Acorns,
-  Leaves
-}
-
-
-enum cardValue {
-  Lower,
-  Upper,
-  King,
-  Ten,
-  Ace
-}
-
 class  Card {
-  color : cardColor;
-  value: cardValue;
+  color : String;
+  value : String;
 
-  constructor(color:cardColor ,value: cardValue){
+  constructor(color: String ,value: String){
     this.color=color;
     this.value=value;
   }
