@@ -1,4 +1,12 @@
 <h1> Game </h1>
 <div>
- 
+  <label> help </label>
+ <button type="button" (click)="createDeck()">Create & Shuffle </button>
+
+ <ul>  
+    <li *ngFor="#card of own_cards">
+      {{ own_cards.color }} is {{ own_cards.value }} years old.
+    </li>
+  </ul>
+
 </div>
