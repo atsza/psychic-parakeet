@@ -75,6 +75,20 @@ router.get('/profile', passport.authenticate('jwt', {session:false}), (req,res,n
 res.json({user: req.user});
 }) ;
 
+
+router.get('/game',(req,res,next) =>
+{
+    console.log("gamestart");
+    res.json('g');
+}) ;
+
+router.post('/game', (req, res, next) =>
+{ 
+    console.log("gamestart");
+    res.json('g');
+}
+);
+
 //Validate
 router.get('/validate', (req,res,next) =>
 {
