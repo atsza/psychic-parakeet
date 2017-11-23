@@ -42,6 +42,7 @@ export class GamehandlerComponent implements OnInit {
   //Logic if the card can be deployed
 
   onStart(){
+   this.createDeck();
     for(var i =0;i<5;i++){
       this.own_cards.push(this.deck.pop());
     }
