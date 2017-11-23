@@ -23,7 +23,8 @@ const appRoutes: Routes = [
   {path:'register', component: RegisterComponent},
   {path:'login', component: LoginComponent},
   {path:'dashboard', component: DashboardComponent},
-  {path:'profile', component: ProfileComponent}
+  {path:'profile', component: ProfileComponent},
+  {path:'game', component: GamehandlerComponent}
 ]
 
 
