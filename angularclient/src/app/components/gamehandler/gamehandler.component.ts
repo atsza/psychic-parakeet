@@ -15,7 +15,7 @@ export class GamehandlerComponent implements OnInit {
   user: String;
 
   token: String;
-  actualScore: Number;
+  actualScore: number;
   opponent_cards : Card[];
   public own_cards :  Card[];
   deck: Card[];
@@ -24,6 +24,10 @@ export class GamehandlerComponent implements OnInit {
   opponent_cardsWon : Card[];
   cardColor : String[];
   cardValue : String[];
+  started : boolean;
+  actualPlayed: Card;
+  
+
 
   connection;
   messages = [];
@@ -39,6 +43,11 @@ export class GamehandlerComponent implements OnInit {
       this.deck=[];
       this.cardsWon=[];
       this.opponent_cardsWon=[];
+      this.actualScore=0;
+
+      this.actualPlayed=new Card("","");
+      this.deck_upsideDown=new Card("","");
+      this.started=false;
       
 
       // this.opponent_cards.push(new Card(cardColor.Hearts,cardValue.Ace));
@@ -60,10 +69,45 @@ sendMessage(){
   this.socketService.sendMessage(this.message);  
 }
 
+
+playCard(card : Card){
+  
+  var found=this.own_cards.findIndex(x=> x.color==card.color && x.value==card.value);
+  this.actualPlayed=this.own_cards.find(x=> x.color==card.color && x.value==card.value);
+  this.comboScore(this.actualPlayed);
+  
+  this.own_cards.splice(found,1);
+  
+  
+}
+
+  comboScore(card : Card){
+    var double : number;
+    double = 1;
+    if (card.color==this.deck_upsideDown.color){
+      double=2;
+    }
+    if(card.value=="Upper"){
+    this.own_cards.forEach(element => {
+      if (element.value=="King" && element.color==card.color)
+      this.actualScore=this.actualScore+ 20*double;
+    });
+  }
+    if(card.value=="King"){
+      this.own_cards.forEach(element => {
+        if (element.value=="Upper" && element.color==card.color)
+        this.actualScore=this.actualScore+ 20*double;
+      });
+    
+  }
+  }
+
   //Logic if the card can be deployed
 
   onStart(){
+
    this.createDeck();
+   this.started=true;
     for(var i =0;i<5;i++){
       this.own_cards.push(this.deck.pop());
     }
@@ -71,9 +115,13 @@ sendMessage(){
       this.opponent_cards.push(this.deck.pop());
     }
     this.deck_upsideDown=(this.deck.pop());
-
+    
   }
 
+
+  remainingDeck(){
+    return (this.deck.length+1);
+  }
 
   drawCard(){
    if(this.deck.length!=0){
@@ -122,7 +170,9 @@ class  Card {
   constructor(color: String ,value: String){
     this.color=color;
     this.value=value;
+
+   
   }
 
-  
+
   };

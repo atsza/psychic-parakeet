@@ -1,15 +1,27 @@
 <h1> Game </h1>
+<h2> In game Points: {{actualScore}}</h2>
 <div>
-  <label> help </label>
- <button type="button" (click)="onStart()">Create & Shuffle </button>
+ <button [hidden]="started" type="button" (click)="onStart()">Create & Shuffle </button>
+
+
+<div [hidden]="!started">Remaining cards in deck (upside down card included):
+    <span >{{remainingDeck()}}</span>
+</div>
+<div [hidden]="!started"> Upside down card:
+    {{deck_upsideDown.value }} of {{deck_upsideDown.color}}
+</div>
 
  <table>  
-
     <tr>
-      <button  *ngFor="let card of own_cards" type="button">
-      {{ card.color }} is {{ card.value }} years old.
+      <button  *ngFor="let card of own_cards" type="button" (click)="playCard(card)">
+      {{ card.value }} of {{ card.color }}
       </button>
     </tr>
   </table>
   <input [(ngModel)]="message"  /><button (click)="sendMessage()">Send</button> 
 </div>
+
+<div>Field</div>
+<div>Your put {{actualPlayed.value }} of {{actualPlayed.color}} </div>
+<div>Enemy put</div>
+
