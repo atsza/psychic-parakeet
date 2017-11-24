@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {AuthService} from '../../services/auth.service';
 import {Router} from '@angular/router';
 import { forEach } from '@angular/router/src/utils/collection';
+
+import { MessagecompComponent } from '../messagecomp/messagecomp.component';
 
 @Component({
   selector: 'app-gamehandler',
@@ -11,6 +13,7 @@ import { forEach } from '@angular/router/src/utils/collection';
 export class GamehandlerComponent implements OnInit {
   
   user: String;
+
   token: String;
   actualScore: Number;
   opponent_cards : Card[];
@@ -22,11 +25,13 @@ export class GamehandlerComponent implements OnInit {
   cardColor : String[];
   cardValue : String[];
 
-  
-
+  connection;
+  messages = [];
+  message;
 
   constructor(private authService:AuthService,
-    private router:Router) {
+    private router:Router,
+  private socketService: MessagecompComponent) {
       this.cardColor= ["Hearts","Bells","Acorns","Leaves"];
       this.cardValue= ["Lower","Upper","King","Ten","Ace"];
       this.opponent_cards=[];
@@ -41,7 +46,19 @@ export class GamehandlerComponent implements OnInit {
       // this.opponent_cards.push(new Card(cardColor.Acorns,cardValue.Ace));
      }
   ngOnInit() {
-  }
+    this.connection = this.socketService.getMessages().subscribe(message => {
+     this.messages.push(message);
+  })
+}
+
+ngOnDestroy() {
+  this.connection.unsubscribe();
+}
+
+sendMessage(){
+  this.message = '';
+  this.socketService.sendMessage(this.message);  
+}
 
   //Logic if the card can be deployed
 
@@ -54,7 +71,6 @@ export class GamehandlerComponent implements OnInit {
       this.opponent_cards.push(this.deck.pop());
     }
     this.deck_upsideDown=(this.deck.pop());
-
 
   }
 

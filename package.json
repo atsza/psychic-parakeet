@@ -18,6 +18,7 @@
     "mongoose": "*",
     "passport": "*",
     "passport-jwt": "*",
+    "socket.io": "^2.0.4",
     "typescript": "^2.0.10"
   },
   "author": "",
