@@ -79,9 +79,17 @@ io.on('connection', (socket) => {
             console.log('user disconnected');
         });
     
-        socket.on('message', (message) => {
-            console.log(message);           
+        socket.on('lobby_request', (token) => {
+           io.sockets.emit('lobby_request', token);
         });
+
+        socket.on('lobby_response', (tokens) => {
+            io.sockets.emit('lobby_response', tokens);
+         });
+         socket.on('game_accept', (tokens) => {
+            console.log('Game started! Players: \n' +  tokens.from + '\n' +  tokens.to);
+            io.sockets.emit('game_accept', { Player1: tokens.from, Player2: tokens.to });
+         });
     
     });
    

@@ -1,9 +1,10 @@
+import * as io from 'socket.io-client';
+import { Observable } from 'rxjs/Observable';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {AuthService} from '../../services/auth.service';
 import {Router} from '@angular/router';
 import { forEach } from '@angular/router/src/utils/collection';
 
-import { SocketService } from '../../services/socket.service';
 
 @Component({
   selector: 'app-gamehandler',
@@ -11,6 +12,9 @@ import { SocketService } from '../../services/socket.service';
   styleUrls: ['./gamehandler.component.css']
 })
 export class GamehandlerComponent implements OnInit {
+  socket: SocketIOClient.Socket;
+  url = "http://localhost:5000";
+  status = "offline";
   token: String;
   player1 : Player;
   player2 : Player;
@@ -27,12 +31,12 @@ export class GamehandlerComponent implements OnInit {
 
 
   connection;
-  messages = [];
-  message;
+  history = [];
 
   constructor(private authService:AuthService,
-    private router:Router,
-  private socketService: SocketService) {
+    private router:Router) {
+      this.authService.loadToken();
+      this.token= authService.authToken;
       this.cardColors= ["Hearts","Bells","Acorns","Leaves"];
       this.cardFigures= ["Lower","Upper","King","Ten","Ace"];
       this.cardValues= [2,3,4,10,11]
@@ -48,18 +52,14 @@ export class GamehandlerComponent implements OnInit {
       
      }
   ngOnInit() {
-    this.connection = this.socketService.getMessages().subscribe(message => {
-     this.messages.push(message);
+    this.socket = io(this.url);
+    this.connection = this.getEvents().subscribe(event => {
+     this.history.push(event);
   })
 }
 
 ngOnDestroy() {
   this.connection.unsubscribe();
-}
-
-sendMessage(){
-  this.message = 'johohoho';
-  this.socketService.sendMessage(this.message);  
 }
 
   onStart(){
@@ -97,7 +97,7 @@ sendMessage(){
     else
       return false;
   }
-  
+
   remainingDeck(){
     return (this.deck.length);
   }
@@ -164,8 +164,49 @@ sendMessage(){
           this.player1.actualScore += 20*multiplicity;
       });
     }
+  }
+
+    enterLobby(){
+      this.status = 'inLobby';
+      this.socket.emit('lobby_request', this.token);
+    }
+    
+    enterGame(){
+      this.status = 'inGame';
+    }
+    
+    getEvents() {
+      let observable = new Observable(observer => {
+        this.socket = io(this.url);
+        this.socket.on('lobby_request', (token) => {
+          if (this.status == 'inLobby' && token != this.token) {
+              this.socket.emit('lobby_response', { from: this.token, to: token })
+          }
+          observer.next(token);   
+        });
+        this.socket.on('lobby_response', (tokens) => {
+          if (this.status == 'inLobby' && tokens.to == this.token && tokens.from != this.token ) {
+              this.socket.emit('game_accept', { from: this.token, to: tokens.from })
+          }
+          observer.next(tokens);   
+        });
+        this.socket.on('game_accept', (tokens) => {
+            console.log(tokens);
+          if ((this.status == 'inGame' || this.status == 'inLobby') && (tokens.Player1 == this.token || tokens.Player2 == this.token )) {
+              this.status = 'inGame';
+              console.log(this.history);
+              //if player 1 init game
+          }
+          observer.next(tokens);   
+        });
+        return () => {
+          this.socket.disconnect();
+        };  
+      })     
+      return observable;
     }
 }
+
 
 
 
