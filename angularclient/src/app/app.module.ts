@@ -19,7 +19,6 @@ import {SocketService} from './services/socket.service';
 import {FlashMessagesModule} from 'angular2-flash-messages';
 import {AuthGuard} from './guards/auth.guard';
 import { GamehandlerComponent } from './components/gamehandler/gamehandler.component';
-import { MessagecompComponent } from './components/messagecomp/messagecomp.component';
 
 const appRoutes: Routes = [
   {path:'', component: HomeComponent},
