@@ -15,7 +15,7 @@ export class GamehandlerComponent implements OnInit {
   socket: SocketIOClient.Socket;
   url = "http://localhost:5000";
   status = "offline";
-  token: String;
+  server_token: String;
   player1 : Player;
   player2 : Player;
   nextPlayer : Player;
@@ -34,13 +34,14 @@ export class GamehandlerComponent implements OnInit {
 
   constructor(private authService:AuthService,
     private router:Router) {
-      this.authService.loadToken();
-      this.token= authService.authToken;
+      this.server_token = "";
       this.cardColors= ["Hearts","Bells","Acorns","Leaves"];
       this.cardFigures= ["Lower","Upper","King","Ten","Ace"];
       this.cardValues= [2,3,4,10,11]
       this.player1=new Player();
       this.player2=new Player();
+      this.authService.loadToken();
+      this.player1.token = authService.authToken;
 
       this.deck=[];
       this.dominantCard=new Card("","",0);
@@ -139,11 +140,14 @@ ngOnDestroy() {
   }
      
   drawCard(player : Player){
-    if(this.remainingDeck()!=0){
-      player.hand.push(this.deck.pop());
-    }
-    else
-      player.hand.push(this.dominantCard);
+    if (this.deck.length != 0) {
+      if(this.remainingDeck()!=0){
+        player.hand.push(this.deck.pop());
+      }
+      else {
+        player.hand.push(this.dominantCard);
+      }
+   }
   }
 
   playCard(card : Card){
@@ -158,7 +162,7 @@ ngOnDestroy() {
       nextPlayer = this.Score(this.player1, this.player2);
       this.drawCard(nextPlayer);
       this.drawCard(nextPlayer.token == this.player1.token ? this.player2 : this.player1); 
-    }
+      }
     this.socket.emit('game_event', this.exportAction(nextPlayer.token));
   }
 
@@ -188,8 +192,8 @@ ngOnDestroy() {
       next_player_token : next_player,
       dominant_card : this.dominantCard,
       dominant_color : this.dominantColor,
-      player1 : next_player == this.token ? this.player1 : this.player2,
-      player2 : next_player == this.token ? this.player2 : this.player1,
+      player1 : this.player1.is_server_p1 ? this.player1 : this.player2,
+      player2 : this.player1.is_server_p1 ? this.player2 : this.player1,
     }
   }
 
@@ -197,38 +201,38 @@ ngOnDestroy() {
     this.deck = data.deck;
     this.dominantCard = data.dominant_card;
     this.dominantColor = data.dominant_color;
-    this.player1 = data.player1;
-    this.player2 = data.player2;
+    this.player1 = this.player1.is_server_p1 ? data.player1 : data.player2;
+    this.player2 = this.player1.is_server_p1 ? data.player2 : data.player1;
   }
 
     enterLobby(){
       this.status = 'inLobby';
-      this.socket.emit('lobby_request', this.token);
+      this.socket.emit('lobby_request', this.player1.token);
     }
     
     getEvents() {
       let observable = new Observable(observer => {
         this.socket = io(this.url);
         this.socket.on('lobby_request', (token) => {
-          if (this.status == 'inLobby' && token != this.token) {
-              this.socket.emit('lobby_response', { from: this.token, to: token })
+          if (this.status == 'inLobby' && token != this.player1.token) {
+              this.socket.emit('lobby_response', { from: this.player1.token, to: token })
           }
           observer.next({ event: 'lobby_request', payload: token });   
         });
         this.socket.on('lobby_response', (tokens) => {
-          if (this.status == 'inLobby' && tokens.to == this.token && tokens.from != this.token ) {
+          if (this.status == 'inLobby' && tokens.to == this.player1.token && tokens.from != this.player1.token ) {
               this.status = 'inGame_hold';
-              this.socket.emit('game_accept', { from: this.token, to: tokens.from })
+              this.socket.emit('game_accept', { from: this.player1.token, to: tokens.from })
           }
           observer.next({ event: 'lobby_response', payload: tokens });   
         });
         this.socket.on('game_accept', (tokens) => {
-          if ((this.status == 'inGame_hold' || this.status == 'inLobby') && (tokens.Player1 == this.token || tokens.Player2 == this.token )) {
+          if ((this.status == 'inGame_hold' || this.status == 'inLobby') && (tokens.Player1 == this.player1.token || tokens.Player2 == this.player1.token )) {
               this.status = 'inGame_hold';
-              if(this.token==tokens.Player1){
-                 this.onStart();
-                 this.player1.token = this.token;
+              if(this.player1.token==tokens.Player1){
+                 this.player1.is_server_p1 = true;
                  this.player2.token = tokens.Player2;
+                 this.onStart();
                  this.socket.emit('game_event', this.exportAction(tokens.Player2))
               }
           }
@@ -236,11 +240,13 @@ ngOnDestroy() {
         });
         this.socket.on('game_event', (data) => {
           data = data.data;
-          if (this.status == 'inGame_hold' && (data.player1.token == this.token || data.player2.token == this.token)) {
+          if (this.status == 'inGame_hold' && (data.player1.token == this.player1.token || data.player2.token == this.player1.token)) {
             this.loadData(data);  
-            if (this.token == data.next_player_token) {
+            if (this.player1.token == data.next_player_token) {
                   this.status = 'inGame_active';
               }
+          } else {
+            console.log('gebasz');
           }
           observer.next({ event: 'game_event', payload: data });   
         });
@@ -269,6 +275,7 @@ class  Card {
 
 class Player{
   token : String;
+  is_server_p1 : Boolean;
   actualScore : number;
   hand : Card[];
   actualPlayed: Card;
@@ -278,6 +285,7 @@ class Player{
   
   constructor(){
     this.token = "";
+    this. is_server_p1 = false;
     this.actualScore=0;
     this.hand = [];
     this.actualPlayed = new Card("","",0);
