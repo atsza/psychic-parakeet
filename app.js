@@ -90,7 +90,10 @@ io.on('connection', (socket) => {
             console.log('Game started! Players: \n' +  tokens.from + '\n' +  tokens.to);
             io.sockets.emit('game_accept', { Player1: tokens.from, Player2: tokens.to });
          });
-    
+         socket.on('game_event', (data) => {
+            console.log('Turn played! Payload:' + data.next_player_token);
+            io.sockets.emit('game_event', { data });
+         });
     });
    
 http.listen(5000, () => {

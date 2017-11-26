@@ -18,6 +18,7 @@ export class GamehandlerComponent implements OnInit {
   token: String;
   player1 : Player;
   player2 : Player;
+  nextPlayer : Player;
 
   deck: Card[];
   cardColors : String[];
@@ -40,8 +41,8 @@ export class GamehandlerComponent implements OnInit {
       this.cardColors= ["Hearts","Bells","Acorns","Leaves"];
       this.cardFigures= ["Lower","Upper","King","Ten","Ace"];
       this.cardValues= [2,3,4,10,11]
-      this.player1=new Player("");
-      this.player2=new Player("");
+      this.player1=new Player();
+      this.player2=new Player();
 
       this.deck=[];
       this.actualPlayedCard=new Card("","",0);
@@ -142,9 +143,12 @@ ngOnDestroy() {
   }
 
   playCard(card : Card){
+    this.status = 'inGame_hold';
     this.player1.actualPlayed=this.player1.hand.find(x=> x.color==card.color && x.value==card.value)
     this.player1.hand.splice(this.player1.hand.findIndex(x=> x.color==card.color && x.value==card.value),1);
     this.comboScore(this.player1.actualPlayed);
+
+    this.socket.emit('game_event', this.exportAction(this.player2));
   }
 
   comboScore(card : Card){
@@ -166,13 +170,32 @@ ngOnDestroy() {
     }
   }
 
+  exportAction(next_player){
+    return {
+      deck : this.deck,
+      next_player_token : next_player,
+      dominant_card : this.dominantCard,
+      dominant_color : this.dominantColor,
+      player1 : next_player == this.token ? this.player1 : this.player2,
+      player2 : next_player == this.token ? this.player2 : this.player1,
+      actual_played : this.actualPlayedCard,
+      actual_answered : this.actualAnsweredCard
+    }
+  }
+
+  loadData(data) {
+    this.deck = data.deck;
+    this.dominantCard = data.dominant_card;
+    this.dominantColor = data.dominant_color;
+    this.player1 = data.player1;
+    this.player2 = data.player2;
+    this.actualPlayedCard = data.actual_played;
+    this.actualAnsweredCard = data.actual_answered;
+  }
+
     enterLobby(){
       this.status = 'inLobby';
       this.socket.emit('lobby_request', this.token);
-    }
-    
-    enterGame(){
-      this.status = 'inGame';
     }
     
     getEvents() {
@@ -182,22 +205,37 @@ ngOnDestroy() {
           if (this.status == 'inLobby' && token != this.token) {
               this.socket.emit('lobby_response', { from: this.token, to: token })
           }
-          observer.next(token);   
+          observer.next({ event: 'lobby_request', payload: token });   
         });
         this.socket.on('lobby_response', (tokens) => {
           if (this.status == 'inLobby' && tokens.to == this.token && tokens.from != this.token ) {
+              this.status = 'inGame_hold';
               this.socket.emit('game_accept', { from: this.token, to: tokens.from })
           }
-          observer.next(tokens);   
+          observer.next({ event: 'lobby_response', payload: tokens });   
         });
         this.socket.on('game_accept', (tokens) => {
             console.log(tokens);
-          if ((this.status == 'inGame' || this.status == 'inLobby') && (tokens.Player1 == this.token || tokens.Player2 == this.token )) {
-              this.status = 'inGame';
-              console.log(this.history);
-              //if player 1 init game
+          if ((this.status == 'inGame_hold' || this.status == 'inLobby') && (tokens.Player1 == this.token || tokens.Player2 == this.token )) {
+              this.status = 'inGame_hold';
+              if(this.token==tokens.Player1){
+                 this.onStart();
+                 this.player1.token = this.token;
+                 this.player2.token = tokens.Player2;
+                 this.socket.emit('game_event', this.exportAction(tokens.Player2))
+              }
           }
-          observer.next(tokens);   
+          observer.next({ event: 'game_accept', payload: tokens });   
+        });
+        this.socket.on('game_event', (data) => {
+          data = data.data;
+          if (this.status == 'inGame_hold' && (data.player1.token == this.token || data.player2.token == this.token)) {
+              if (this.token == data.next_player_token) {
+                this.loadData(data);
+                this.status = 'inGame_active';
+              }
+          }
+          observer.next({ event: 'game_event', payload: data });   
         });
         return () => {
           this.socket.disconnect();
@@ -223,7 +261,7 @@ class  Card {
 };
 
 class Player{
-  socketStatus : String;
+  token : String;
   actualScore : number;
   hand : Card[];
   actualPlayed: Card;
@@ -231,8 +269,8 @@ class Player{
   risk : boolean;
   snapszer : boolean;
   
-  constructor(socketStatus: String){
-    this.socketStatus=socketStatus;
+  constructor(){
+    this.token = "";
     this.actualScore=0;
     this.hand = [];
     this.actualPlayed = new Card("","",0);

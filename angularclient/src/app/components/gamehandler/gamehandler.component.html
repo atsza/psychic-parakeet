@@ -2,6 +2,13 @@
 <h2> In game Points: actualScore</h2>
 <div>
 
+  <table>
+    <tr [hidden]="this.status != 'inGame_active'">
+      <button *ngFor="let card of this.player1.hand" type="button" (click)="playCard(card)">
+          Kuka
+      </button>
+    </tr>
+  </table>
   <input [(ngModel)]="status"  /><button (click)="enterLobby()">Send</button> 
 </div>
 
