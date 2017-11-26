@@ -11,28 +11,20 @@ import { SocketService } from '../../services/socket.service';
   styleUrls: ['./gamehandler.component.css']
 })
 export class GamehandlerComponent implements OnInit {
-  
-  user: String;
-
   token: String;
-  actualScore: number;
-  opponentScore: number;
-  opponent_cards : Card[];
-  public own_cards :  Card[];
+  player1 : Player;
+  player2 : Player;
+
   deck: Card[];
-  deck_upsideDown: Card;
-  cardsWon : Card[];
-  opponent_cardsWon : Card[];
-  cardColor : String[];
-  cardValue : String[];
+  cardColors : String[];
+  cardFigures : String[];
+  cardValues : number[];
   started : boolean;
-  actualPlayed: Card;
-  actualPlayedByOpponent: Card;
-  powerColor: String;
-  playerRisk: boolean;
-  opponentRisk: boolean;
-  playerSnapszer: boolean;
-  opponentSnapszer: boolean;
+  dominantCard: Card;
+  actualPlayedCard: Card;
+  actualAnsweredCard: Card;
+  dominantColor: String;
+
 
   connection;
   messages = [];
@@ -41,24 +33,19 @@ export class GamehandlerComponent implements OnInit {
   constructor(private authService:AuthService,
     private router:Router,
   private socketService: SocketService) {
-      this.cardColor= ["Hearts","Bells","Acorns","Leaves"];
-      this.cardValue= ["Lower","Upper","King","Ten","Ace"];
-      this.opponent_cards=[];
-      this.own_cards=[];
+      this.cardColors= ["Hearts","Bells","Acorns","Leaves"];
+      this.cardFigures= ["Lower","Upper","King","Ten","Ace"];
+      this.cardValues= [2,3,4,10,11]
+      this.player1=new Player("");
+      this.player2=new Player("");
+
       this.deck=[];
-      this.cardsWon=[];
-      this.opponent_cardsWon=[];
-      this.actualScore=0;
-
-      this.actualPlayed=new Card("","");
-      this.actualPlayedByOpponent=new Card("","");
-      this.deck_upsideDown=new Card("","");
+      this.actualPlayedCard=new Card("","",0);
+      this.actualAnsweredCard=new Card("","",0);
+      this.dominantCard=new Card("","",0);
       this.started=false;
+      this.dominantColor="";
       
-
-      // this.opponent_cards.push(new Card(cardColor.Hearts,cardValue.Ace));
-      // this.opponent_cards.push(new Card(cardColor.Bells,cardValue.Ace));
-      // this.opponent_cards.push(new Card(cardColor.Acorns,cardValue.Ace));
      }
   ngOnInit() {
     this.connection = this.socketService.getMessages().subscribe(message => {
@@ -75,116 +62,52 @@ sendMessage(){
   this.socketService.sendMessage(this.message);  
 }
 
-
-playCard(card : Card){
-  
-  var found=this.own_cards.findIndex(x=> x.color==card.color && x.value==card.value);
-  this.actualPlayed=this.own_cards.find(x=> x.color==card.color && x.value==card.value);
-  this.comboScore(this.actualPlayed);
-  
-  this.own_cards.splice(found,1);
-}
-
-
-
-  comboScore(card : Card){
-    var double : number;
-    double = 1;
-    if (card.color==this.deck_upsideDown.color){
-      double=2;
-    }
-    if(card.value=="Upper"){
-    this.own_cards.forEach(element => {
-      if (element.value=="King" && element.color==card.color)
-      this.actualScore=this.actualScore+ 20*double;
-    });
-  }
-    if(card.value=="King"){
-      this.own_cards.forEach(element => {
-        if (element.value=="Upper" && element.color==card.color)
-        this.actualScore=this.actualScore+ 20*double;
-      });
-    
-  }
-  }
-
-  Score(){
-    if(this.isFirstPlayedHigher(this.actualPlayed,this.actualPlayedByOpponent))
-      this.actualScore += this.convertToPoints(this.actualPlayed) + this.convertToPoints(this.actualPlayedByOpponent);
-    else
-      this.opponentScore += this.convertToPoints(this.actualPlayed) + this.convertToPoints(this.actualPlayedByOpponent);
-    this.actualPlayed=new Card("","");
-    this.actualPlayedByOpponent= new Card("","");
-  }
-
-  isFirstPlayedHigher(first : Card, secound : Card){
-    if(first.color == this.powerColor && secound.color != this.powerColor)
-      return true;
-    else if(first.color != secound.color)
-      return true;
-    else if(first.value=="Ace" || (first.value=="Ten" && secound.value != "Ace"))
-      return true;
-    else if(first.value=="King" && (secound.value != "Ace" || secound.value != "Ten"))
-      return true;
-    else if(first.value=="Upper" && secound.value=="Lower")
-      return true;
-    else
-      return false;
-  }
-
-  convertToPoints(card : Card){
-    if(card.value=="Ace")
-      return 11;
-    if(card.value=="Ten")
-      return 10;
-    if(card.value=="King")
-      return 4;
-    if(card.value=="Upper")
-      return 3;
-    if(card.value=="Lower")
-      return 2;
-  }
-
-  IsWinner(){
-    if(this.actualScore >= 66)
-      return true;
-    else
-      return false;
-  }
-
-  //Logic if the card can be deployed
-
   onStart(){
 
    this.createDeck();
    this.started=true;
     for(var i =0;i<5;i++){
-      this.own_cards.push(this.deck.pop());
+      this.drawCard(this.player1);
+      this.drawCard(this.player2);
     }
-    for(var i =0;i<5;i++){
-      this.opponent_cards.push(this.deck.pop());
-    }
-    this.deck_upsideDown=(this.deck.pop());
-    this.powerColor=this.deck_upsideDown.color;
+    this.dominantCard=(this.deck.pop());
+    this.dominantColor=this.dominantCard.color;
   }
 
+  Score(player : Player, answer : Player){
+    if(this.isFirstPlayedHigher(player.actualPlayed,answer.actualPlayed)){
+      player.actualScore += player.actualPlayed.value + answer.actualPlayed.value;
+      player.cardsWon.push(player.actualPlayed);
+      player.cardsWon.push(answer.actualPlayed);
+    }
+    else{
+      answer.actualScore += player.actualPlayed.value + answer.actualPlayed.value;
+      answer.cardsWon.push(player.actualPlayed);
+      answer.cardsWon.push(answer.actualPlayed);
+    }
+  }
 
+  isFirstPlayedHigher(first : Card, answer : Card){
+    if(first.color == this.dominantColor && answer.color != this.dominantColor)
+      return true;
+    else if(first.color != answer.color)
+      return true;
+    else if(first.value > answer.value)
+      return true;
+    else
+      return false;
+  }
+  
   remainingDeck(){
-    return (this.deck.length+1);
-  }
-
-  drawCard(){
-   if(this.deck.length!=0){
-     this.own_cards.push(this.deck.pop());
-   }
-   else
-   this.own_cards.push(this.deck_upsideDown);
+    return (this.deck.length);
   }
 
   createDeck(){
-    this.cardColor.forEach(c => {
-      this.cardValue.forEach(v => {
-        this.deck.push (new Card(c,v));
+    this.cardColors.forEach(c => {
+      var i = 0;
+      this.cardFigures.forEach(v => {
+        this.deck.push (new Card(c,v,this.cardValues[i]));
+        i++;
       });
     });    
     
@@ -209,20 +132,71 @@ playCard(card : Card){
       return array;
     }
   }
-    
-  
+     
+  drawCard(player : Player){
+    if(this.remainingDeck()!=0){
+      player.hand.push(this.deck.pop());
+    }
+    else
+      player.hand.push(this.dominantCard);
+  }
+
+  playCard(card : Card){
+    this.player1.actualPlayed=this.player1.hand.find(x=> x.color==card.color && x.value==card.value)
+    this.player1.hand.splice(this.player1.hand.findIndex(x=> x.color==card.color && x.value==card.value),1);
+    this.comboScore(this.player1.actualPlayed);
+  }
+
+  comboScore(card : Card){
+    var multiplicity = 1;
+    if (card.color==this.dominantColor){
+      multiplicity=2;
+    }
+    if(card.figure=="Upper"){
+      this.player1.hand.forEach(element => {
+        if (element.figure=="King" && element.color==card.color)
+          this.player1.actualScore += 20*multiplicity;
+      });
+    }
+    if(card.figure=="King"){
+      this.player1.hand.forEach(element => {
+        if (element.figure=="Upper" && element.color==card.color)
+          this.player1.actualScore += 20*multiplicity;
+      });
+    }
+    }
 }
+
+
 
 class  Card {
   color : String;
-  value : String;
+  figure : String;
+  value : number;
 
-  constructor(color: String ,value: String){
+  constructor(color: String ,figure: String, value: number){
     this.color=color;
+    this.figure=figure;
     this.value=value;
-
-   
   }
+};
 
-
-  };
+class Player{
+  socketStatus : String;
+  actualScore : number;
+  hand : Card[];
+  actualPlayed: Card;
+  cardsWon : Card[];
+  risk : boolean;
+  snapszer : boolean;
+  
+  constructor(socketStatus: String){
+    this.socketStatus=socketStatus;
+    this.actualScore=0;
+    this.hand = [];
+    this.actualPlayed = new Card("","",0);
+    this.cardsWon = [],
+    this.risk=false;
+    this.snapszer=false;
+  }
+};
