@@ -19,6 +19,7 @@
     "passport": "*",
     "passport-jwt": "*",
     "socket.io": "^2.0.4",
+    "socket.io-server": "^1.0.0-b",
     "typescript": "^2.0.10"
   },
   "author": "",

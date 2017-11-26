@@ -57,7 +57,7 @@ app.use('/users', users);
 //index route
 app.get('/',(req,res) =>
 {
-res.send('REPTILEHAUS Chat Server')
+res.send('Server is running')
 //res.json("test");
 
 });
@@ -79,10 +79,8 @@ io.on('connection', (socket) => {
             console.log('user disconnected');
         });
     
-        socket.on('add-message', (message) => {
-            io.emit('message', { type: 'new-message', text: message });
-            // Function above that stores the message in the database
-           
+        socket.on('message', (message) => {
+            console.log(message);           
         });
     
     });

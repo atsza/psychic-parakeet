@@ -11,6 +11,7 @@
     "outDir": "../public",
     "sourceMap": true,
     "target": "es5",
+    "types": ["socket.io-client"],
     "typeRoots": [
       "../node_modules/@types"
     ]

@@ -3,7 +3,7 @@ import {AuthService} from '../../services/auth.service';
 import {Router} from '@angular/router';
 import { forEach } from '@angular/router/src/utils/collection';
 
-import { MessagecompComponent } from '../messagecomp/messagecomp.component';
+import { SocketService } from '../../services/socket.service';
 
 @Component({
   selector: 'app-gamehandler',
@@ -16,6 +16,7 @@ export class GamehandlerComponent implements OnInit {
 
   token: String;
   actualScore: number;
+  opponentScore: number;
   opponent_cards : Card[];
   public own_cards :  Card[];
   deck: Card[];
@@ -26,8 +27,12 @@ export class GamehandlerComponent implements OnInit {
   cardValue : String[];
   started : boolean;
   actualPlayed: Card;
-  
-
+  actualPlayedByOpponent: Card;
+  powerColor: String;
+  playerRisk: boolean;
+  opponentRisk: boolean;
+  playerSnapszer: boolean;
+  opponentSnapszer: boolean;
 
   connection;
   messages = [];
@@ -35,7 +40,7 @@ export class GamehandlerComponent implements OnInit {
 
   constructor(private authService:AuthService,
     private router:Router,
-  private socketService: MessagecompComponent) {
+  private socketService: SocketService) {
       this.cardColor= ["Hearts","Bells","Acorns","Leaves"];
       this.cardValue= ["Lower","Upper","King","Ten","Ace"];
       this.opponent_cards=[];
@@ -46,6 +51,7 @@ export class GamehandlerComponent implements OnInit {
       this.actualScore=0;
 
       this.actualPlayed=new Card("","");
+      this.actualPlayedByOpponent=new Card("","");
       this.deck_upsideDown=new Card("","");
       this.started=false;
       
@@ -65,7 +71,7 @@ ngOnDestroy() {
 }
 
 sendMessage(){
-  this.message = '';
+  this.message = 'johohoho';
   this.socketService.sendMessage(this.message);  
 }
 
@@ -77,9 +83,9 @@ playCard(card : Card){
   this.comboScore(this.actualPlayed);
   
   this.own_cards.splice(found,1);
-  
-  
 }
+
+
 
   comboScore(card : Card){
     var double : number;
@@ -102,6 +108,50 @@ playCard(card : Card){
   }
   }
 
+  Score(){
+    if(this.isFirstPlayedHigher(this.actualPlayed,this.actualPlayedByOpponent))
+      this.actualScore += this.convertToPoints(this.actualPlayed) + this.convertToPoints(this.actualPlayedByOpponent);
+    else
+      this.opponentScore += this.convertToPoints(this.actualPlayed) + this.convertToPoints(this.actualPlayedByOpponent);
+    this.actualPlayed=new Card("","");
+    this.actualPlayedByOpponent= new Card("","");
+  }
+
+  isFirstPlayedHigher(first : Card, secound : Card){
+    if(first.color == this.powerColor && secound.color != this.powerColor)
+      return true;
+    else if(first.color != secound.color)
+      return true;
+    else if(first.value=="Ace" || (first.value=="Ten" && secound.value != "Ace"))
+      return true;
+    else if(first.value=="King" && (secound.value != "Ace" || secound.value != "Ten"))
+      return true;
+    else if(first.value=="Upper" && secound.value=="Lower")
+      return true;
+    else
+      return false;
+  }
+
+  convertToPoints(card : Card){
+    if(card.value=="Ace")
+      return 11;
+    if(card.value=="Ten")
+      return 10;
+    if(card.value=="King")
+      return 4;
+    if(card.value=="Upper")
+      return 3;
+    if(card.value=="Lower")
+      return 2;
+  }
+
+  IsWinner(){
+    if(this.actualScore >= 66)
+      return true;
+    else
+      return false;
+  }
+
   //Logic if the card can be deployed
 
   onStart(){
@@ -115,7 +165,7 @@ playCard(card : Card){
       this.opponent_cards.push(this.deck.pop());
     }
     this.deck_upsideDown=(this.deck.pop());
-    
+    this.powerColor=this.deck_upsideDown.color;
   }
 
 
