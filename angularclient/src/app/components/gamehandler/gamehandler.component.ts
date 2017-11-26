@@ -26,8 +26,6 @@ export class GamehandlerComponent implements OnInit {
   cardValues : number[];
   started : boolean;
   dominantCard: Card;
-  actualPlayedCard: Card;
-  actualAnsweredCard: Card;
   dominantColor: String;
 
 
@@ -45,8 +43,6 @@ export class GamehandlerComponent implements OnInit {
       this.player2=new Player();
 
       this.deck=[];
-      this.actualPlayedCard=new Card("","",0);
-      this.actualAnsweredCard=new Card("","",0);
       this.dominantCard=new Card("","",0);
       this.started=false;
       this.dominantColor="";
@@ -80,12 +76,20 @@ ngOnDestroy() {
       player.actualScore += player.actualPlayed.value + answer.actualPlayed.value;
       player.cardsWon.push(player.actualPlayed);
       player.cardsWon.push(answer.actualPlayed);
+      player.actualPlayed = new Card("","",0);
+      answer.actualPlayed = new Card("","",0);
+      return player;
     }
     else{
       answer.actualScore += player.actualPlayed.value + answer.actualPlayed.value;
       answer.cardsWon.push(player.actualPlayed);
       answer.cardsWon.push(answer.actualPlayed);
+      player.actualPlayed = new Card("","",0);
+      answer.actualPlayed = new Card("","",0);
+      return answer;
     }
+
+    
   }
 
   isFirstPlayedHigher(first : Card, answer : Card){
@@ -148,7 +152,14 @@ ngOnDestroy() {
     this.player1.hand.splice(this.player1.hand.findIndex(x=> x.color==card.color && x.value==card.value),1);
     this.comboScore(this.player1.actualPlayed);
 
-    this.socket.emit('game_event', this.exportAction(this.player2));
+    let nextPlayer = this.player2;
+    
+    if (this.player2.actualPlayed.figure != "") {
+      nextPlayer = this.Score(this.player1, this.player2);
+      this.drawCard(nextPlayer);
+      this.drawCard(nextPlayer.token == this.player1.token ? this.player2 : this.player1); 
+    }
+    this.socket.emit('game_event', this.exportAction(nextPlayer.token));
   }
 
   comboScore(card : Card){
@@ -171,6 +182,7 @@ ngOnDestroy() {
   }
 
   exportAction(next_player){
+    this.status = 'inGame_hold';
     return {
       deck : this.deck,
       next_player_token : next_player,
@@ -178,8 +190,6 @@ ngOnDestroy() {
       dominant_color : this.dominantColor,
       player1 : next_player == this.token ? this.player1 : this.player2,
       player2 : next_player == this.token ? this.player2 : this.player1,
-      actual_played : this.actualPlayedCard,
-      actual_answered : this.actualAnsweredCard
     }
   }
 
@@ -189,8 +199,6 @@ ngOnDestroy() {
     this.dominantColor = data.dominant_color;
     this.player1 = data.player1;
     this.player2 = data.player2;
-    this.actualPlayedCard = data.actual_played;
-    this.actualAnsweredCard = data.actual_answered;
   }
 
     enterLobby(){
@@ -215,7 +223,6 @@ ngOnDestroy() {
           observer.next({ event: 'lobby_response', payload: tokens });   
         });
         this.socket.on('game_accept', (tokens) => {
-            console.log(tokens);
           if ((this.status == 'inGame_hold' || this.status == 'inLobby') && (tokens.Player1 == this.token || tokens.Player2 == this.token )) {
               this.status = 'inGame_hold';
               if(this.token==tokens.Player1){
@@ -230,9 +237,9 @@ ngOnDestroy() {
         this.socket.on('game_event', (data) => {
           data = data.data;
           if (this.status == 'inGame_hold' && (data.player1.token == this.token || data.player2.token == this.token)) {
-              if (this.token == data.next_player_token) {
-                this.loadData(data);
-                this.status = 'inGame_active';
+            this.loadData(data);  
+            if (this.token == data.next_player_token) {
+                  this.status = 'inGame_active';
               }
           }
           observer.next({ event: 'game_event', payload: data });   
