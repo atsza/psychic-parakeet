@@ -94,6 +94,10 @@ io.on('connection', (socket) => {
             console.log('Turn played! Payload:' + data.next_player_token);
             io.sockets.emit('game_event', { data });
          });
+         socket.on('game_won', (data) => {
+            console.log('Game won! Payload:' + data.next_player_token);
+            io.sockets.emit('game_won', { data });
+         });
     });
    
 http.listen(5000, () => {

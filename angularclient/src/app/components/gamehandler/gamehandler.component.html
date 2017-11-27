@@ -1,17 +1,24 @@
-<h1> Game </h1>
-<h2> In game Points: {{ this.player1.actualScore }}</h2>
-<h3>Dominant color: {{ this.dominantColor }}</h3>
-<h3>Deck size: {{ this.deck.length }}</h3>
-<div>
 
-  <table>
-    <tr>
-      <button [disabled]="this.status != 'inGame_active'" *ngFor="let card of this.player1.hand" type="button" (click)="playCard(card)">
-          {{ card.figure }}/{{ card.color }} : {{ card.value }}
-      </button>
-    </tr>
-  </table>
-  <input [(ngModel)]="status"/><button [disabled]="this.status != 'offline'" (click)="enterLobby()">Enter lobby</button> 
+<div class="row" [hidden]="this.status != 'offline' && this.status != 'inLobby'">
+    <input  [(ngModel)]="status" disabled/><button [disabled]="this.status != 'offline'" (click)="enterLobby()">Enter lobby</button> 
 </div>
-
+<div class="row" [hidden]="this.status != 'inGame_hold' && this.status != 'inGame_active'">
+    <div class="col-6">
+            <h1> Game </h1>
+            <h2> In game Points: {{ this.player1.actualScore }}</h2>
+            <h3>Dominant color: {{ this.dominantColor }}</h3>
+            <h3>Deck size: {{ this.deck.length }}</h3>
+            <div>History: <span *ngFor="let elem of this.history">{{ elem.time + ': ' + elem.event }}<br/></span></div>
+    </div>
+    <div class="col-6">
+        <table>
+            <tr>
+            <button [disabled]="this.status != 'inGame_active'" *ngFor="let card of this.player1.hand" type="button" (click)="playCard(card)">
+                {{ card.figure }}/{{ card.color }} : {{ card.value }}
+            </button>
+            </tr>
+        </table>
+    </div>
+</div>
+{{ this.status }}
 

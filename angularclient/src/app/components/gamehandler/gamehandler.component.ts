@@ -79,6 +79,9 @@ ngOnDestroy() {
       player.cardsWon.push(answer.actualPlayed);
       player.actualPlayed = new Card("","",0);
       answer.actualPlayed = new Card("","",0);
+      if (player.actualScore >= 66) {
+        this.socket.emit('game_won', this.exportAction(player));
+      }
       return player;
     }
     else{
@@ -87,6 +90,9 @@ ngOnDestroy() {
       answer.cardsWon.push(answer.actualPlayed);
       player.actualPlayed = new Card("","",0);
       answer.actualPlayed = new Card("","",0);
+      if (answer.actualScore >= 66) {
+        this.socket.emit('game_won', this.exportAction(answer));
+    }
       return answer;
     }
 
@@ -152,6 +158,9 @@ ngOnDestroy() {
 
   playCard(card : Card){
     this.status = 'inGame_hold';
+    if (this.deck.length == 0 && this.player1.hand.length == 0 && this.player2.hand.length == 0) {
+        this.socket.emit('game_ended', this.exportAction(this.player2));
+    }
     this.player1.actualPlayed=this.player1.hand.find(x=> x.color==card.color && x.value==card.value)
     this.player1.hand.splice(this.player1.hand.findIndex(x=> x.color==card.color && x.value==card.value),1);
     this.comboScore(this.player1.actualPlayed);
@@ -183,6 +192,10 @@ ngOnDestroy() {
           this.player1.actualScore += 20*multiplicity;
       });
     }
+  }
+
+  endGame(player_won) {
+      this.status = player_won ? 'inGame_win' : 'inGame_lose'
   }
 
   exportAction(next_player){
@@ -217,14 +230,14 @@ ngOnDestroy() {
           if (this.status == 'inLobby' && token != this.player1.token) {
               this.socket.emit('lobby_response', { from: this.player1.token, to: token })
           }
-          observer.next({ event: 'lobby_request', payload: token });   
+          observer.next({ time: Date(), event: 'lobby_request', payload: token });   
         });
         this.socket.on('lobby_response', (tokens) => {
           if (this.status == 'inLobby' && tokens.to == this.player1.token && tokens.from != this.player1.token ) {
               this.status = 'inGame_hold';
               this.socket.emit('game_accept', { from: this.player1.token, to: tokens.from })
           }
-          observer.next({ event: 'lobby_response', payload: tokens });   
+          observer.next({ time: Date(), event: 'lobby_response', payload: tokens });   
         });
         this.socket.on('game_accept', (tokens) => {
           if ((this.status == 'inGame_hold' || this.status == 'inLobby') && (tokens.Player1 == this.player1.token || tokens.Player2 == this.player1.token )) {
@@ -236,7 +249,7 @@ ngOnDestroy() {
                  this.socket.emit('game_event', this.exportAction(tokens.Player2))
               }
           }
-          observer.next({ event: 'game_accept', payload: tokens });   
+          observer.next({ time: Date(), event: 'game_accept', payload: tokens });   
         });
         this.socket.on('game_event', (data) => {
           data = data.data;
@@ -248,8 +261,20 @@ ngOnDestroy() {
           } else {
             console.log('gebasz');
           }
-          observer.next({ event: 'game_event', payload: data });   
+          observer.next({ time: Date(), event: 'game_event', payload: data });   
         });
+        this.socket.on('game_won', (data) => {
+            data = data.data;
+            if (this.status == 'inGame_hold' && (data.player1.token == this.player1.token || data.player2.token == this.player1.token)) {
+              this.loadData(data); 
+              if (this.player1.token == data.next_player_token) {
+                    this.endGame(true);
+                }
+            } else {
+                this.endGame(false);
+            }
+            observer.next({ time: Date(), event: 'game_won', payload: data });   
+          });
         return () => {
           this.socket.disconnect();
         };  
