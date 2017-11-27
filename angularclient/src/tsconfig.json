@@ -15,5 +15,10 @@
     "typeRoots": [
       "../node_modules/@types"
     ]
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "e2e",
+    "**/*.spec.ts"    
+  ]
 }
