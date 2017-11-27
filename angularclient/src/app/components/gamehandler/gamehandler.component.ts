@@ -73,15 +73,13 @@ ngOnDestroy() {
   }
 
   Score(player : Player, answer : Player){
-    if(this.isFirstPlayedHigher(player.actualPlayed,answer.actualPlayed)){
+    if(this.isFirstPlayedHigher(player.actualPlayed, answer.actualPlayed)){
       player.actualScore += player.actualPlayed.value + answer.actualPlayed.value;
       player.cardsWon.push(player.actualPlayed);
       player.cardsWon.push(answer.actualPlayed);
       player.actualPlayed = new Card("","",0);
       answer.actualPlayed = new Card("","",0);
-      if (player.actualScore >= 66) {
-        this.socket.emit('game_won', this.exportAction(player));
-      }
+
       return player;
     }
     else{
@@ -90,9 +88,6 @@ ngOnDestroy() {
       answer.cardsWon.push(answer.actualPlayed);
       player.actualPlayed = new Card("","",0);
       answer.actualPlayed = new Card("","",0);
-      if (answer.actualScore >= 66) {
-        this.socket.emit('game_won', this.exportAction(answer));
-    }
       return answer;
     }
 
@@ -100,14 +95,14 @@ ngOnDestroy() {
   }
 
   isFirstPlayedHigher(first : Card, answer : Card){
-    if(first.color == this.dominantColor && answer.color != this.dominantColor)
-      return true;
-    else if(first.color != answer.color)
-      return true;
-    else if(first.value > answer.value)
-      return true;
-    else
-      return false;
+    if (first.color == answer.color) {
+        return first.value > answer.value
+    } 
+    if (answer.color == this.dominantColor) {
+        return false
+    }
+
+    return true
   }
 
   remainingDeck(){
@@ -152,15 +147,13 @@ ngOnDestroy() {
       }
       else {
         player.hand.push(this.dominantCard);
+        console.log(player);
       }
    }
   }
 
   playCard(card : Card){
     this.status = 'inGame_hold';
-    if (this.deck.length == 0 && this.player1.hand.length == 0 && this.player2.hand.length == 0) {
-        this.socket.emit('game_ended', this.exportAction(this.player2));
-    }
     this.player1.actualPlayed=this.player1.hand.find(x=> x.color==card.color && x.value==card.value)
     this.player1.hand.splice(this.player1.hand.findIndex(x=> x.color==card.color && x.value==card.value),1);
     this.comboScore(this.player1.actualPlayed);
@@ -169,10 +162,15 @@ ngOnDestroy() {
     
     if (this.player2.actualPlayed.figure != "") {
       nextPlayer = this.Score(this.player1, this.player2);
-      this.drawCard(nextPlayer);
-      this.drawCard(nextPlayer.token == this.player1.token ? this.player2 : this.player1); 
-      }
-    this.socket.emit('game_event', this.exportAction(nextPlayer.token));
+        this.drawCard(nextPlayer);
+        this.drawCard(nextPlayer.token == this.player1.token ? this.player2 : this.player1); 
+    }
+    if (this.deck.length == 0 && this.player1.hand.length == 0 && this.player2.hand.length == 0) {
+        this.socket.emit('game_ended', this.exportAction(nextPlayer.token));
+    } else {
+        this.socket.emit('game_event', this.exportAction(nextPlayer.token));
+    }
+    
   }
 
   comboScore(card : Card){
@@ -192,10 +190,6 @@ ngOnDestroy() {
           this.player1.actualScore += 20*multiplicity;
       });
     }
-  }
-
-  endGame(player_won) {
-      this.status = player_won ? 'inGame_win' : 'inGame_lose'
   }
 
   exportAction(next_player){
@@ -257,23 +251,27 @@ ngOnDestroy() {
             this.loadData(data);  
             if (this.player1.token == data.next_player_token) {
                   this.status = 'inGame_active';
+                  if (this.player1.actualScore >= 66 || this.player2.actualScore >= 66) {
+                    this.socket.emit('game_ended', this.exportAction(this.player1.actualScore > this.player2.actualScore ? this.player1.token : this.player2.token));
+                    this.status = this.player1.actualScore > this.player2.actualScore ? 'inGame_won' : 'inGame_lost'
+                  }
               }
           } else {
-            console.log('gebasz');
           }
           observer.next({ time: Date(), event: 'game_event', payload: data });   
         });
-        this.socket.on('game_won', (data) => {
+        this.socket.on('game_ended', (data) => {
             data = data.data;
             if (this.status == 'inGame_hold' && (data.player1.token == this.player1.token || data.player2.token == this.player1.token)) {
               this.loadData(data); 
               if (this.player1.token == data.next_player_token) {
-                    this.endGame(true);
+                    this.status = 'inGame_won'
+                } else {
+                    console.log('from event!');
+                    this.status = 'inGame_lost'
                 }
-            } else {
-                this.endGame(false);
-            }
-            observer.next({ time: Date(), event: 'game_won', payload: data });   
+            } 
+            observer.next({ time: Date(), event: 'game_ended', payload: data });   
           });
         return () => {
           this.socket.disconnect();
