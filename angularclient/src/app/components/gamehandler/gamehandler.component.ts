@@ -27,6 +27,7 @@ export class GamehandlerComponent implements OnInit {
   started : boolean;
   dominantCard: Card;
   dominantColor: String;
+  imagePath : String;
 
 
   connection;
@@ -42,6 +43,7 @@ export class GamehandlerComponent implements OnInit {
       this.player2=new Player();
       this.authService.loadToken();
       this.player1.token = authService.authToken;
+      this.imagePath = "../../assets/image.jpg";
 
       this.deck=[];
       this.dominantCard=new Card("","",0);
@@ -169,7 +171,7 @@ ngOnDestroy() {
     } else {
         this.socket.emit('game_event', this.exportAction(nextPlayer.token));
     }
-    
+    return;
   }
 
   comboScore(card : Card){
