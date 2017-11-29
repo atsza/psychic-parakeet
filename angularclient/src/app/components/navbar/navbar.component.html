@@ -1,5 +1,5 @@
 <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top" >
-  <a class="navbar-brand" [routerLinkActive]="['active']" [routerLinkActiveOptions]="{exact:true}" [routerLink]="['/']">Snapszer Home</a>
+  <a class="navbar-brand" [routerLinkActive]="['active']" [routerLinkActiveOptions]="{exact:true}" [routerLink]="['/']">Snapszer Kezdőlap</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -7,23 +7,23 @@
   <div class="collapse navbar-collapse" id="navbarsExampleDefault">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item active" *ngIf="authService.loggedIn()" [routerLinkActive]="['active']" [routerLinkActiveOptions]="{exact:true}">
-        <a class="nav-link" [routerLink]="['/profile']">Profile<span class="sr-only">(current)</span></a>
+        <a class="nav-link" [routerLink]="['/profile']">Profil<span class="sr-only">(current)</span></a>
       </li>
       <li class="nav-item" *ngIf="authService.loggedIn()" [routerLinkActive]="['active']" [routerLinkActiveOptions]="{exact:true}">
-        <a class="nav-link" [routerLink]="['/dashboard']">Dashboard</a>
+        <a class="nav-link" [routerLink]="['/dashboard']">Eredmények</a>
       </li>
       <li class="nav-item" *ngIf="authService.loggedIn()" [routerLinkActive]="['active']" [routerLinkActiveOptions]="{exact:true}">
-          <a class="nav-link" [routerLink]="['/game']">Game</a>
+          <a class="nav-link" [routerLink]="['/game']">Játék</a>
         </li>
     </ul>
     <ul class="nav navbar-nav navbar-right">
       <li class="nav-item active" *ngIf="!authService.loggedIn()" [routerLinkActive]="['active']" [routerLinkActiveOptions]="{exact:true}">
-        <a class="nav-link" [routerLink]="['/login']" >Login<span class="sr-only">(current)</span></a>
+        <a class="nav-link" [routerLink]="['/login']" >Bejelentkezés<span class="sr-only">(current)</span></a>
       </li>
       <li class="nav-item active" *ngIf="!authService.loggedIn()" [routerLinkActive]="['active']" [routerLinkActiveOptions]="{exact:true}">
-        <a class="nav-link" [routerLink]="['/login']">Register<span class="sr-only">(current)</span></a>
+        <a class="nav-link" [routerLink]="['/register']">Regisztráció<span class="sr-only">(current)</span></a>
       </li>
-      <li class="nav-item active" *ngIf="authService.loggedIn()"><a (click)= "onLogoutClick()" href="#">Logout</a></li>
+      <li class="nav-item active" *ngIf="authService.loggedIn()"><a (click)= "onLogoutClick()" href="#">Kijelentkezés</a></li>
     </ul>
   </div>
 </nav>

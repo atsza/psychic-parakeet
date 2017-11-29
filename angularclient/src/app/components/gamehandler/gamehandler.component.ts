@@ -1,6 +1,7 @@
 import * as io from 'socket.io-client';
 import { Observable } from 'rxjs/Observable';
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import {NgIf} from '@angular/common';
 import {AuthService} from '../../services/auth.service';
 import {Router} from '@angular/router';
 import { forEach } from '@angular/router/src/utils/collection';
@@ -165,7 +166,7 @@ ngOnDestroy() {
     
     if (this.player2.actualPlayed.figure != "") {
       nextPlayer = this.Score(this.player1, this.player2);
-      if(this.isNoMoreDrawRuleActive()){
+      if(!this.isNoMoreDrawRuleActive()){
         this.drawCard(nextPlayer);
         this.drawCard(nextPlayer.token == this.player1.token ? this.player2 : this.player1); 
       }
@@ -242,7 +243,7 @@ ngOnDestroy() {
   }
 
   isNoMoreDrawRuleActive(){
-    return this.player1.risk || this.player2.risk || this.dominantCard.figure=="";
+    return this.isSnapszer() || this.player1.risk || this.player2.risk || this.dominantCard.figure=="";
   }
 
   isGameEnded(){
@@ -310,8 +311,9 @@ ngOnDestroy() {
         this.socket.on('game_event', (data) => {
           data = data.data;
           if (this.status == 'inGame_hold' && (data.player1.token == this.player1.token || data.player2.token == this.player1.token)) {
-            this.loadData(data);  
+            this.loadData(data);
             if (this.player1.token == data.next_player_token) {
+                  this.findHighestRule(this.player1.hand); 
                   this.status = 'inGame_active';
                   if (this.isGameEnded() ) {
                     this.socket.emit('game_ended', this.exportAction(this.player1.actualScore > this.player2.actualScore ? this.player1.token : this.player2.token));
@@ -332,7 +334,6 @@ ngOnDestroy() {
                     console.log('from event!');
                     this.status = 'inGame_lost'
                 }
-                this.resetBoard();
             } 
             observer.next({ time: Date(), event: 'game_ended', payload: data });   
           });

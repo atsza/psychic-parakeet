@@ -1,11 +1,11 @@
-<h2 class="page-header">Register</h2>
+<h2 class="page-header">Regisztráció</h2>
 <form (submit)="onRegisterSubmit()">
   <div class="form-group">
-        <label >Name</label>
+        <label >Név</label>
         <input type="text" [(ngModel)]="name" name="name" class="form-control" id="email">
   </div>
   <div class="form-group">
-    <label >Username</label>
+    <label >Felhasználónév</label>
     <input type="text" [(ngModel)]="username" name="username" class="form-control" id="email">
   </div>
   <div class="form-group">
@@ -13,7 +13,7 @@
     <input type="text" [(ngModel)]="email" name="email" class="form-control" id="pwd">
   </div>
   <div class="form-group">
-      <label >Password</label>
+      <label >Jelszó</label>
       <input type="password" [(ngModel)]="password" name="password" class="form-control" id="pwd">
     </div>
   <button type="submit"  class="btn btn-primary">Submit</button>

@@ -32,7 +32,7 @@ export class LoginComponent implements OnInit {
         this.flashMessage.show('You are now Logged In',
         {cssClass: 'alert-success', 
         timeout: 5000});
-        this.router.navigate(['dashboard']);
+        this.router.navigate(['game']);
       }
       else
       {

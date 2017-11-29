@@ -1,36 +1,96 @@
 
+<!-- lobby window -->
 <div class="row">
     <div class="alert alert-success col-8" [hidden]="this.status != 'inGame_won'">
-        You won!
+        Nyertél! :)
         <a href="/game" class="btn">Back to lobby</a>
     </div>
     <div class="alert alert-danger col-8" [hidden]="this.status != 'inGame_lost'">
-        You lost! :(
+        Vesztettél! :(
         <a href="/game" class="btn">Back to lobby</a>
     </div>
     <div [hidden]="this.status != 'offline' && this.status != 'inLobby'">
         <input  [(ngModel)]="status" disabled/><button [disabled]="this.status != 'offline'" (click)="enterLobby()">Enter lobby</button> 
     </div>
 </div>
-<div class="row" [hidden]="this.status != 'inGame_hold' && this.status != 'inGame_active'">
-    <div class="col-6">
-            <h1> Game </h1>
-            <h2> In game Points: {{ this.player1.actualScore }}</h2>
-            <h3>Dominant color: {{ this.dominantColor }}</h3>
-            <h3>Deck size: {{ this.deck.length }}</h3>
-            <div>History: <span *ngFor="let elem of this.history">{{ elem.time + ': ' + elem.event }}<br/></span></div>
-    </div>
-    <div class="col-6">
-        <table>
-            <tr>
-            <button [disabled]="this.status != 'inGame_active'" *ngFor="let card of this.player1.hand" type="button" (click)="playCard(card)">
-                {{ card.figure }}/{{ card.color }} : {{ card.value }}
-            </button>
-            
+<!-- end of lobby window -->
 
-            </tr>
-        </table>
+<!-- game window -->
+<div class="card" *ngIf="this.status == 'inGame_hold' || this.status == 'inGame_active'">
+    <div class="card-body">  
+        <div class="row">
+            <div class="col-6">
+                <div class="card" style="width:100%">
+                    <div class="card-body">
+                        <div class="h2">
+                            Pontszám: {{ this.player1.actualScore }}
+                        </div>
+                        <div class="h3">
+                            Adu:
+                            <img style="height: 150px;width:90px;margin:1px;" *ngIf="this.dominantCard.figure != ''" [src]="'../../assets/' + this.dominantCard.color + '_' + this.dominantCard.figure + '.png'"/>
+                        </div>
+                        <div class="h3">
+                            Lapok a pakliban: {{ this.deck.length }}
+                            <img style="height: 90px;width:60;margin:1px;" *ngIf="this.deck.length != 0" [src]="'../../assets/' + 'Card_Back.png'"/>
+                        </div>
+                        <div class="h3">
+                            Elütött lapok:
+                        </div>
+                        <img style="height: 90px;width:60;margin:1px;" *ngFor="let card of this.player1.cardsWon" [src]="'../../assets/' + card.color + '_' + card.figure + '.png'"/>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card row" style="width:100%;margin-top:20px;">
+                    <div class="card-body">
+                        <h4 class="card-title">Kijátszott lapok</h4>
+                        <div class="col-6">
+                                <img style="height: 420x;width:280px;" *ngIf="this.player1.actualPlayed.figure != ''" [src]="'../../assets/' + this.player1.actualPlayed.color + '_' + this.player1.actualPlayed.figure + '.png'"/>
+                        </div>
+                        <div class="col-6">
+                            <div class="card" >
+                                <img style="height: 420px;width:280px;" *ngIf="this.player2.actualPlayed.figure != ''" [src]="'../../assets/' + this.player2.actualPlayed.color + '_' + this.player2.actualPlayed.figure + '.png'"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="alert alert-success" git *ngIf="this.player1.snapszer">
+                            Snapszered bemondásra került!
+                        </div>
+                        <div class="alert alert-success" *ngIf="this.player1.risk">
+                            Takarásod bemondásra került!
+                        </div>
+                        <div class="alert alert-warning" *ngIf="this.player2.risk">
+                            A másik játékos betakart!
+                        </div>
+                        <h4 class="card-title">Saját lapok</h4>
+                        <button 
+                            [disabled]="this.status != 'inGame_active' || this.player1.snapszer || this.player2.snapszer || this.player1.risk || this.player2.risk"
+                            class="btn btn-lg btn-alert" 
+                            style="margin:5px;cursor:pointer;" 
+                            (click)="risk()"
+                        >
+                                Takarok! {{ this.ruleLevel }}
+                        </button>
+                        <button  
+                            [disabled]="this.status != 'inGame_active' || this.player1.snapszer || this.player2.snapszer || this.player1.risk || this.player2.risk || this.deck.length!=9"
+                            class="btn btn-lg btn-danger" 
+                            style="margin:5px;cursor:pointer" 
+                            (click)="snapszer()"
+                        >
+                            SNAPSZER!
+                        </button>
+                        <div class="col-12">
+                            <img [style.pointer-events]="this.status == 'inGame_active' ? 'auto' : 'none'" *ngFor="let card of this.player1.hand" style="width:15%;margin:0 5px;cursor: pointer;" (click)="playCard(card)"  [src]="'../../assets/' + card.color + '_' + card.figure + '.png'"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-
-
+<!-- end of game window -->
