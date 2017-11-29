@@ -26,7 +26,7 @@
             <button [disabled]="this.status != 'inGame_active'" *ngFor="let card of this.player1.hand" type="button" (click)="playCard(card)">
                 {{ card.figure }}/{{ card.color }} : {{ card.value }}
             </button>
-            <img  [disabled]="this.status != 'inGame_active'" [src]="this.imagePath" *ngFor="let card of this.player1.hand" (click)="playCard(card)">
+            
 
             </tr>
         </table>

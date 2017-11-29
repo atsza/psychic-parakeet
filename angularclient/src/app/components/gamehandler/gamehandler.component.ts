@@ -28,6 +28,7 @@ export class GamehandlerComponent implements OnInit {
   dominantCard: Card;
   dominantColor: String;
   imagePath : String;
+  rulelevel : number;
 
 
   connection;
@@ -43,7 +44,7 @@ export class GamehandlerComponent implements OnInit {
       this.player2=new Player();
       this.authService.loadToken();
       this.player1.token = authService.authToken;
-      this.imagePath = "../../assets/image.jpg";
+      this.rulelevel = 1;
 
       this.deck=[];
       this.dominantCard=new Card("","",0);
@@ -98,13 +99,13 @@ ngOnDestroy() {
 
   isFirstPlayedHigher(first : Card, answer : Card){
     if (first.color == answer.color) {
-        return first.value > answer.value
+        return first.value > answer.value;
     } 
-    if (answer.color == this.dominantColor) {
-        return false
+    if (first.color == this.dominantColor) {
+        return true;
     }
 
-    return true
+    return false;
   }
 
   remainingDeck(){
@@ -157,14 +158,17 @@ ngOnDestroy() {
     this.status = 'inGame_hold';
     this.player1.actualPlayed=this.player1.hand.find(x=> x.color==card.color && x.value==card.value)
     this.player1.hand.splice(this.player1.hand.findIndex(x=> x.color==card.color && x.value==card.value),1);
-    this.comboScore(this.player1.actualPlayed);
+    if(this.player2.actualPlayed.figure == "")
+      this.comboScore(this.player1.actualPlayed);
 
     let nextPlayer = this.player2;
     
     if (this.player2.actualPlayed.figure != "") {
       nextPlayer = this.Score(this.player1, this.player2);
+      if(this.isNoMoreDrawRuleActive()){
         this.drawCard(nextPlayer);
         this.drawCard(nextPlayer.token == this.player1.token ? this.player2 : this.player1); 
+      }
     }
     if (this.deck.length == 0 && this.player1.hand.length == 0 && this.player2.hand.length == 0) {
         this.socket.emit('game_ended', this.exportAction(nextPlayer.token));
@@ -173,6 +177,31 @@ ngOnDestroy() {
     }
     return;
   }
+
+  isCardPlayable(card : Card){
+    return (this.rulelevel==4 && card.color==this.player2.actualPlayed.color && card.value>=this.player2.actualPlayed.value) || (this.rulelevel==3 && card.color==this.player2.actualPlayed.color) || (this.rulelevel==2 && card.color==this.dominantColor) || this.rulelevel==1;
+  }
+
+  findHighestRule(cards : Card[]){
+    if (this.player2.actualPlayed.figure != "" && this.isNoMoreDrawRuleActive()){
+      cards.forEach(c=>{
+        if(c.color==this.player2.actualPlayed.color && c.value>=this.player2.actualPlayed.value){
+          this.rulelevel=4;
+          return;
+        }
+        else if(c.color==this.player2.actualPlayed.color){
+          this.rulelevel=3;
+          return;
+        }
+        else if(c.color==this.dominantColor){
+          this.rulelevel=2;
+          return;
+        }
+      });
+    }
+    this.rulelevel=1;
+  }
+
 
   comboScore(card : Card){
     var multiplicity = 1;
@@ -193,8 +222,30 @@ ngOnDestroy() {
     }
   }
 
+  snapszer(){
+    this.player1.snapszer=true;
+  }
+
+  isSnapszer(){
+    return this.player1.snapszer || this.player2.snapszer;
+  }
+
+  snapserCausedGameEnd(){
+    if(this.isSnapszer() )
+      return (this.player1.snapszer && this.player2.actualScore > 0) || (this.player2.snapszer && this.player1.actualScore > 0)
+    return false;
+  }
+
+  risk(){
+    this.player1.risk=true;
+  }
+
+  isNoMoreDrawRuleActive(){
+    return this.player1.risk || this.player2.risk || this.dominantCard.figure=="";
+  }
+
   isGameEnded(){
-    return (this.player1.actualScore >= 66 || this.player2.actualScore >= 66 )
+    return this.player1.actualScore >= 66 || this.player2.actualScore >= 66 || (this.player1.hand.length==0 && this.player2.hand.length==0) || this.snapserCausedGameEnd();
   }
 
   resetBoard(){
@@ -261,7 +312,7 @@ ngOnDestroy() {
             this.loadData(data);  
             if (this.player1.token == data.next_player_token) {
                   this.status = 'inGame_active';
-                  if (this.player1.actualScore >= 66 || this.player2.actualScore >= 66 ) {
+                  if (this.isGameEnded() ) {
                     this.socket.emit('game_ended', this.exportAction(this.player1.actualScore > this.player2.actualScore ? this.player1.token : this.player2.token));
                     this.status = this.player1.actualScore > this.player2.actualScore ? 'inGame_won' : 'inGame_lost'
                   }
