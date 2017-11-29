@@ -183,23 +183,24 @@ ngOnDestroy() {
   }
 
   findHighestRule(cards : Card[]){
+    this.rulelevel=1;
     if (this.player2.actualPlayed.figure != "" && this.isNoMoreDrawRuleActive()){
       cards.forEach(c=>{
         if(c.color==this.player2.actualPlayed.color && c.value>=this.player2.actualPlayed.value){
           this.rulelevel=4;
-          return;
         }
         else if(c.color==this.player2.actualPlayed.color){
-          this.rulelevel=3;
-          return;
+          if(this.rulelevel<3){
+            this.rulelevel==3;
+          }
         }
         else if(c.color==this.dominantColor){
-          this.rulelevel=2;
-          return;
+          if(this.rulelevel<2){
+            this.rulelevel==2;
+          }
         }
       });
     }
-    this.rulelevel=1;
   }
 
 
